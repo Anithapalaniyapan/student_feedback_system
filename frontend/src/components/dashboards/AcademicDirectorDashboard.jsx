@@ -168,7 +168,7 @@ const AcademicDirectorDashboard = () => {
           message: 'Please log in to continue',
           severity: 'error'
         });
-        navigate('/login', { replace: true });
+        // Removed navigation to login page
         return;
       }
 
@@ -205,7 +205,7 @@ const AcademicDirectorDashboard = () => {
         return;
       }
 
-page       // Create an array of promises for each question
+      // Create an array of promises for each question
       const questionPromises = questions.map(question => {
         // Ensure token is properly formatted
         if (!token.trim()) {
@@ -216,13 +216,9 @@ page       // Create an array of promises for each question
         const payload = {
           text: question.question,
           departmentId: parseInt(department),
-          role: targetRole
+          role: targetRole,
+          year: targetRole === 'student' ? parseInt(year) : 1 // Always include year, default to 1 if not student
         };
-        
-        // Only include year if role is student
-        if (targetRole === 'student') {
-          payload.year = parseInt(year);
-        }
         
         // Only include staffId if role is staff and staff value exists
         if (targetRole === 'staff' && staff) {
@@ -233,7 +229,7 @@ page       // Create an array of promises for each question
         return axios.post('http://localhost:8080/api/questions', payload, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token.trim()}`
+            'x-access-token': token.trim()
           }
         });
       });
@@ -275,7 +271,7 @@ page       // Create an array of promises for each question
             severity: 'error'
           });
           
-          // Removed navigation to login page
+          // Don't navigate to login page
         } else if (error.response.status === 403) {
           // Permission error
           setSnackbar({
@@ -322,7 +318,7 @@ page       // Create an array of promises for each question
           message: 'Please log in to continue',
           severity: 'error'
         });
-        navigate('/login', { replace: true });
+        // Removed navigation to login page
         return;
       }
 
@@ -395,232 +391,328 @@ page       // Create an array of promises for each question
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f0f2f5' }}>
-      <Box sx={{
-        width: 240,
-        flexShrink: 0,
-        bgcolor: theme.palette.background.paper,
-        borderRight: `1px solid ${theme.palette.divider}`,
-        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
-        transition: 'all 0.3s ease'
-      }}>
-        <Box sx={{ p: 3 }}>
-          <Paper elevation={0} sx={{
-            p: 3,
-            textAlign: 'center',
-            bgcolor: 'transparent',
-            borderRadius: 2
-          }}>
-            <Avatar sx={{
-              width: 100,
-              height: 100,
-              mx: 'auto',
-              mb: 2,
-              bgcolor: theme.palette.primary.main,
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              transition: 'transform 0.3s ease',
-              '&:hover': { transform: 'scale(1.08)' }
-            }} />
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-              Academic Director
-            </Typography>
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
-              Engineering
-            </Typography>
-          </Paper>
-        </Box>
-        <Divider sx={{ mx: 2, mb: 2 }} />
-        <List sx={{ px: 2 }}>
-          {[
-            { icon: <QuestionAnswerIcon />, text: 'Send Feedback', tab: 0 },
-            { icon: <VisibilityIcon />, text: 'View Feedback', tab: 1 },
-            { icon: <AssessmentIcon />, text: 'Analysis', tab: 2 },
-            { icon: <DescriptionIcon />, text: 'Reports', tab: 3 }
-          ].map((item, index) => (
-            <ListItem
-              component="div"
-              key={index}
-              selected={activeTab === item.tab}
-              onClick={() => setActiveTab(item.tab)}
-              sx={{
-                borderRadius: 2,
-                mb: 1,
-                transition: 'all 0.2s ease',
-                '&.Mui-selected': {
-                  bgcolor: theme.palette.primary.main,
-                  color: theme.palette.common.white,
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  '&:hover': { bgcolor: theme.palette.primary.dark },
-                  '& .MuiListItemIcon-root': { color: theme.palette.common.white }
-                },
-                '&:hover': { bgcolor: theme.palette.action.hover, transform: 'translateX(4px)' }
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40, color: activeTab === item.tab ? 'inherit' : theme.palette.primary.main }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.text} sx={{ '& .MuiTypography-root': { fontWeight: 500 } }} />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-      <Box sx={{ flexGrow: 1, p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h5" component="h1">Academic Director Dashboard</Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', bgcolor: '#f0f2f5', overflow: 'auto' }}>
+      <AppBar position="static" sx={{ bgcolor: '#1a237e', boxShadow: 3 }}>
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+            Academic Director Dashboard
+          </Typography>
           <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<LogoutIcon />}
+            color="inherit"
             onClick={handleLogout}
+            startIcon={<LogoutIcon />}
+            sx={{ fontWeight: 'medium' }}
           >
             Logout
           </Button>
-        </Box>
-
-        {activeTab === 0 && (
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>Send Feedback Questions</Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Target Role</InputLabel>
-                  <Select value={targetRole} onChange={(e) => setTargetRole(e.target.value)}>
-                    <MenuItem value="student">Student</MenuItem>
-                    <MenuItem value="staff">Staff</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Department</InputLabel>
-                  <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
-                    <MenuItem value="1">Computer Science</MenuItem>
-                    <MenuItem value="2">Information Technology</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              {targetRole === 'student' && (
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Year</InputLabel>
-                    <Select value={year} onChange={(e) => setYear(e.target.value)}>
-                      <MenuItem value="1">1st Year</MenuItem>
-                      <MenuItem value="2">2nd Year</MenuItem>
-                      <MenuItem value="3">3rd Year</MenuItem>
-                      <MenuItem value="4">4th Year</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              )}
-              {targetRole === 'staff' && (
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Staff</InputLabel>
-                    <Select value={staff} onChange={(e) => setStaff(e.target.value)}>
-                      <MenuItem value="1">Staff 1</MenuItem>
-                      <MenuItem value="2">Staff 2</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              )}
-            </Grid>
-
-            <Box sx={{ mt: 3 }}>
-              <TextField
-                fullWidth
-                label="New Question"
-                value={newQuestion}
-                onChange={(e) => setNewQuestion(e.target.value)}
-                multiline
-                rows={2}
-                sx={{ mb: 2 }}
-              />
-              <Button
-                variant="contained"
-                onClick={editQuestionId ? handleUpdateQuestion : handleAddQuestion}
-                startIcon={editQuestionId ? <EditIcon /> : <SendIcon />}
+        </Toolbar>
+      </AppBar>
+      
+      <Box sx={{ display: 'flex', flexGrow: 1 }}>
+        {/* Sidebar */}
+        <Box sx={{
+          width: 240,
+          flexShrink: 0,
+          bgcolor: theme.palette.background.paper,
+          borderRight: `1px solid ${theme.palette.divider}`,
+          boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
+          display: { xs: 'none', md: 'block' }
+        }}>
+          <Box sx={{ p: 3 }}>
+            <Paper elevation={0} sx={{
+              p: 3,
+              textAlign: 'center',
+              bgcolor: 'transparent',
+              borderRadius: 2
+            }}>
+              <Avatar sx={{
+                width: 100,
+                height: 100,
+                mx: 'auto',
+                mb: 2,
+                bgcolor: theme.palette.primary.main,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                transition: 'transform 0.3s ease',
+                '&:hover': { transform: 'scale(1.08)' }
+              }} />
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                Academic Director
+              </Typography>
+              <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
+                Engineering
+              </Typography>
+            </Paper>
+          </Box>
+          <Divider sx={{ mx: 2, mb: 2 }} />
+          <List sx={{ px: 2 }}>
+            {[
+              { icon: <QuestionAnswerIcon />, text: 'Send Feedback', tab: 0 },
+              { icon: <VisibilityIcon />, text: 'View Feedback', tab: 1 },
+              { icon: <AssessmentIcon />, text: 'Analysis', tab: 2 },
+              { icon: <DescriptionIcon />, text: 'Reports', tab: 3 }
+            ].map((item, index) => (
+              <ListItem
+                component="div"
+                key={index}
+                selected={activeTab === item.tab}
+                onClick={() => setActiveTab(item.tab)}
+                sx={{
+                  borderRadius: 2,
+                  mb: 1,
+                  transition: 'all 0.2s ease',
+                  '&.Mui-selected': {
+                    bgcolor: theme.palette.primary.main,
+                    color: theme.palette.common.white,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    '&:hover': { bgcolor: theme.palette.primary.dark },
+                    '& .MuiListItemIcon-root': { color: theme.palette.common.white }
+                  },
+                  '&:hover': { bgcolor: theme.palette.action.hover, transform: 'translateX(4px)' }
+                }}
               >
-                {editQuestionId ? 'Update Question' : 'Add Question'}
-              </Button>
-            </Box>
-
-            <List sx={{ mt: 3 }}>
-              {questions.map((q) => (
-                <ListItem
-                  key={q.id}
-                  secondaryAction={
-                    <Box>
-                      <IconButton onClick={() => handleEditQuestion(q.id)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDeleteQuestion(q.id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  }
-                >
-                  <ListItemText primary={q.question} />
-                </ListItem>
-              ))}
-            </List>
-
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSendFeedback}
-              disabled={!department || questions.length === 0}
-              sx={{ mt: 3 }}
-            >
-              Send Feedback
-            </Button>
-          </Paper>
-        )}
-
-        {activeTab === 1 && (
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>Current Feedback Questions</Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Filter by Role</InputLabel>
-                  <Select value={viewRole} onChange={(e) => setViewRole(e.target.value)}>
-                    <MenuItem value="student">Student</MenuItem>
-                    <MenuItem value="staff">Staff</MenuItem>
-                  </Select>
-                </FormControl>
+                <ListItemIcon sx={{ minWidth: 40, color: activeTab === item.tab ? 'inherit' : theme.palette.primary.main }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} sx={{ '& .MuiTypography-root': { fontWeight: 500 } }} />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+        
+        {/* Mobile navigation */}
+        <Box sx={{ display: { xs: 'block', md: 'none' }, width: '100%', mb: 2, mt: 2 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              px: 2,
+              '& .MuiTab-root': {
+                minWidth: 'auto',
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                mx: 0.5,
+                fontWeight: 500,
+                color: theme.palette.text.secondary,
+                '&.Mui-selected': {
+                  color: theme.palette.primary.main,
+                  fontWeight: 600,
+                }
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: 1.5,
+              }
+            }}
+          >
+            <Tab icon={<QuestionAnswerIcon />} label="Send" />
+            <Tab icon={<VisibilityIcon />} label="View" />
+            <Tab icon={<AssessmentIcon />} label="Analysis" />
+            <Tab icon={<DescriptionIcon />} label="Reports" />
+          </Tabs>
+        </Box>
+        
+        {/* Main content */}
+        <Box sx={{ flexGrow: 1, p: 3, width: { xs: '100%', md: 'calc(100% - 240px)' } }}>
+          {activeTab === 0 && (
+            <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+              <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, fontWeight: 600, mb: 3 }}>
+                Send Feedback Questions
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Target Role</InputLabel>
+                    <Select value={targetRole} onChange={(e) => setTargetRole(e.target.value)}>
+                      <MenuItem value="student">Student</MenuItem>
+                      <MenuItem value="staff">Staff</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Department</InputLabel>
+                    <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
+                      <MenuItem value="1">Computer Science</MenuItem>
+                      <MenuItem value="2">Information Technology</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                {targetRole === 'student' && (
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Year</InputLabel>
+                      <Select value={year} onChange={(e) => setYear(e.target.value)}>
+                        <MenuItem value="1">1st Year</MenuItem>
+                        <MenuItem value="2">2nd Year</MenuItem>
+                        <MenuItem value="3">3rd Year</MenuItem>
+                        <MenuItem value="4">4th Year</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
+                {targetRole === 'staff' && (
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Staff</InputLabel>
+                      <Select value={staff} onChange={(e) => setStaff(e.target.value)}>
+                        <MenuItem value="1">Staff 1</MenuItem>
+                        <MenuItem value="2">Staff 2</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
               </Grid>
-              <Grid item xs={12}>
-                <List>
-                  {currentFeedbacks.map((feedback, index) => (
-                    <ListItem key={index}>
-                      <ListItemText
-                        primary={feedback.question}
-                        secondary={`${feedback.department} - ${feedback.role === 'student' ? `Year ${feedback.year}` : feedback.staff}`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Grid>
-            </Grid>
-          </Paper>
-        )}
 
-        {activeTab === 3 && (
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>Download Reports</Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Box sx={{ mt: 3 }}>
+                <TextField
+                  fullWidth
+                  label="New Question"
+                  value={newQuestion}
+                  onChange={(e) => setNewQuestion(e.target.value)}
+                  multiline
+                  rows={2}
+                  sx={{ mb: 2 }}
+                />
                 <Button
                   variant="contained"
-                  startIcon={<DownloadIcon />}
-                  onClick={handleDownloadReport}
+                  onClick={editQuestionId ? handleUpdateQuestion : handleAddQuestion}
+                  startIcon={editQuestionId ? <EditIcon /> : <SendIcon />}
+                  sx={{ bgcolor: theme.palette.primary.main, '&:hover': { bgcolor: theme.palette.primary.dark } }}
                 >
-                  Download Feedback Report
+                  {editQuestionId ? 'Update Question' : 'Add Question'}
                 </Button>
+              </Box>
+
+              <List sx={{ mt: 3 }}>
+                {questions.map((q) => (
+                  <ListItem
+                    key={q.id}
+                    secondaryAction={
+                      <Box>
+                        <IconButton onClick={() => handleEditQuestion(q.id)} color="primary">
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleDeleteQuestion(q.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    }
+                    sx={{ bgcolor: '#f9f9f9', borderRadius: 1, mb: 1 }}
+                  >
+                    <ListItemText primary={q.question} />
+                  </ListItem>
+                ))}
+              </List>
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSendFeedback}
+                disabled={!department || questions.length === 0}
+                sx={{ mt: 3, px: 4, py: 1.2, fontWeight: 500 }}
+              >
+                Send Feedback
+              </Button>
+            </Paper>
+          )}
+
+          {activeTab === 1 && (
+            <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+              <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, fontWeight: 600, mb: 3 }}>
+                Current Feedback Questions
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Filter by Role</InputLabel>
+                    <Select value={viewRole} onChange={(e) => setViewRole(e.target.value)}>
+                      <MenuItem value="student">Student</MenuItem>
+                      <MenuItem value="staff">Staff</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <List sx={{ bgcolor: '#f9f9f9', borderRadius: 2, p: 2 }}>
+                    {currentFeedbacks.map((feedback, index) => (
+                      <ListItem key={index} sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                        <ListItemText
+                          primary={<Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{feedback.question}</Typography>}
+                          secondary={`${feedback.department} - ${feedback.role === 'student' ? `Year ${feedback.year}` : feedback.staff}`}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Grid>
               </Grid>
-            </Grid>
-          </Paper>
-        )}
+            </Paper>
+          )}
+
+          {activeTab === 2 && (
+            <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+              <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, fontWeight: 600, mb: 3 }}>
+                Feedback Analysis
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                  <Card sx={{ height: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: 2 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Total Submissions</Typography>
+                      <Typography variant="h3" color="primary">{feedbackStats.totalSubmissions}</Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card sx={{ height: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: 2 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Overall Score</Typography>
+                      <Typography variant="h3" color="primary">{feedbackStats.overallScore}%</Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12}>
+                  <Card sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: 2 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Department-wise Scores</Typography>
+                      <List>
+                        {feedbackStats.departmentWiseScores.map((item, index) => (
+                          <ListItem key={index} sx={{ borderBottom: '1px solid #eee' }}>
+                            <ListItemText 
+                              primary={`${item.department} - Year ${item.year}`} 
+                              secondary={`Score: ${item.score}%`}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Paper>
+          )}
+
+          {activeTab === 3 && (
+            <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+              <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, fontWeight: 600, mb: 3 }}>
+                Download Reports
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Button
+                    variant="contained"
+                    startIcon={<DownloadIcon />}
+                    onClick={handleDownloadReport}
+                    sx={{ px: 4, py: 1.5, fontWeight: 500, bgcolor: theme.palette.primary.main, '&:hover': { bgcolor: theme.palette.primary.dark } }}
+                  >
+                    Download Feedback Report
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper>
+          )}
+        </Box>
       </Box>
       <Snackbar
         open={snackbar.open}

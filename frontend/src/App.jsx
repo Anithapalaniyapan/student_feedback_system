@@ -21,8 +21,14 @@ const App = () => {
     setUserRole(storedRole || '');
   }, []);
 
+  // Modified ProtectedRoute to handle case sensitivity in role comparison
   const ProtectedRoute = ({ element, allowedRole }) => {
-    return isAuthenticated && userRole === allowedRole ? element : <Navigate to="/login" />;
+    const normalizedUserRole = userRole?.toUpperCase();
+    const normalizedAllowedRole = allowedRole?.toUpperCase();
+    
+    return isAuthenticated && normalizedUserRole === normalizedAllowedRole ? 
+      element : 
+      <Navigate to="/login" />;
   };
 
   return (

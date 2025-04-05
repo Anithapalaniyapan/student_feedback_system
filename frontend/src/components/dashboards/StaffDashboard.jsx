@@ -16,7 +16,9 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon
+  ListItemIcon,
+  TextField,
+  Paper
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -37,7 +39,27 @@ const StaffDashboard = () => {
   useEffect(() => {
     const fetchFeedbackQuestions = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/questions/department/1/staff');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No authentication token found');
+          navigate('/login', { replace: true });
+          return;
+        }
+        
+        const response = await fetch('http://localhost:8080/api/questions/department/1/staff', {
+          method: 'GET',
+          headers: {
+            'x-access-token': token,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.status === 403) {
+          console.error('Permission denied');
+          navigate('/login', { replace: true });
+          return;
+        }
+        
         if (!response.ok) {
           throw new Error('Failed to fetch questions');
         }
@@ -49,7 +71,7 @@ const StaffDashboard = () => {
     };
 
     fetchFeedbackQuestions();
-  }, []);
+  }, [navigate]);
 
   const handleSubmitFeedback = async () => {
     if (!selectedQuestion) {
@@ -95,6 +117,7 @@ const StaffDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
@@ -118,7 +141,7 @@ const StaffDashboard = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'auto' }}>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -133,7 +156,7 @@ const StaffDashboard = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
+      <Container maxWidth={false} sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 }, flexGrow: 1 }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
             <Paper sx={{ p: 3 }}>
